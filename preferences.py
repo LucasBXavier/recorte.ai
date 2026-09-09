@@ -2,7 +2,7 @@
 
 Gravadas em :data:`config.PREFERENCES_PATH`, fora da pasta do aplicativo, já
 que o executável do PyInstaller pode rodar de um diretório temporário
-somente leitura. Qualquer falha de leitura ou escrita é silenciosa — as
+somente leitura. Qualquer falha de leitura ou escrita é silenciosa: as
 preferências são um detalhe de conveniência, nunca algo que deveria impedir
 o aplicativo de abrir ou funcionar.
 """

@@ -119,7 +119,7 @@ class BackgroundRemover:
 
             raise ModelError(
                 "Não foi possível carregar o modelo de IA.\n"
-                "Verifique sua conexão na primeira execução — o modelo é "
+                "Verifique sua conexão na primeira execução. O modelo é "
                 "baixado uma única vez.",
                 detail=" | ".join(errors),
             )

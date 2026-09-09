@@ -13,7 +13,8 @@
 
 #define MyAppName "Recorte.ai"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "Recorte.ai"
+#define MyAppPublisher "Lucas Boareto"
+#define MyAppURL "https://lucasboareto.vercel.app"
 #define MyAppExeName "app_gui.exe"
 
 [Setup]
@@ -23,6 +24,9 @@ AppId={{522FC393-1E3D-4553-A1AC-975868E4DCCF}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}
+AppUpdatesURL={#MyAppURL}
 AppVerName={#MyAppName} {#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
@@ -58,6 +62,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{#MyAppURL}"; Description: "Visitar o site de {#MyAppPublisher}"; Flags: postinstall shellexec skipifsilent unchecked
 
 [UninstallDelete]
 ; Remove as preferências salvas (idioma, largura da barra lateral) ao

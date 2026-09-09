@@ -28,6 +28,8 @@ from config import (
     APP_NAME,
     APP_VERSION,
     BACKGROUND_MODE_KEYS,
+    DEVELOPER_NAME,
+    DEVELOPER_URL,
     EXPORT_FORMATS,
     ICON_PATH,
     LOGO_PATH,
@@ -51,6 +53,7 @@ from ui.components import (
     FileList,
     GhostButton,
     LabeledSlider,
+    LinkLabel,
     OptionToggle,
     PrimaryButton,
     ProgressPanel,
@@ -69,7 +72,7 @@ _ACTION_KEYS: dict[str, str] = {
 }
 
 #: Chaves de título/descrição de cada opção de pós-processamento (a ordem
-#: aqui é a ordem de exibição — "smooth_contour" fica por último para ficar
+#: aqui é a ordem de exibição: "smooth_contour" fica por último para ficar
 #: logo acima do seu slider de intensidade).
 _TOGGLE_KEYS: dict[str, tuple[str, str]] = {
     "keep_resolution": ("toggle.keep_resolution.title", "toggle.keep_resolution.desc"),
@@ -200,10 +203,10 @@ class MainWindow(ctk.CTkFrame):
         sidebar.grid_columnconfigure(0, weight=1)
         # A fila de arquivos e os ajustes dividem o espaço flexível: os
         # ajustes cresceram bastante (fundo, exportação, sliders) e por isso
-        # ganham a maior parte — e rolam internamente se ainda não couberem —
+        # ganham a maior parte, e rolam internamente se ainda não couberem,
         # enquanto a fila e os botões de ação (passo 3) ficam sempre visíveis.
         # A fila só reserva espaço quando há arquivos (ver
-        # ``_update_file_list_visibility``) — vazia, ela fica escondida em
+        # ``_update_file_list_visibility``): vazia, ela fica escondida em
         # vez de deixar uma caixa grande e em branco.
         sidebar.grid_rowconfigure(5, weight=2, minsize=160)
 
@@ -300,7 +303,7 @@ class MainWindow(ctk.CTkFrame):
         self.background_selector.grid(row=row, column=0, sticky="ew")
         row += 1
 
-        # Cor, imagem e desfoque compartilham a mesma linha — só um aparece
+        # Cor, imagem e desfoque compartilham a mesma linha: só um aparece
         # por vez, de acordo com o modo de fundo selecionado.
         self.background_color_button = GhostButton(
             options_box, t("bg.color_button.default"), command=self._choose_background_color
@@ -412,7 +415,7 @@ class MainWindow(ctk.CTkFrame):
     def _update_file_list_visibility(self) -> None:
         """Mostra a fila de arquivos só quando há algo nela.
 
-        Vazia, a lista fica escondida e sua linha não reserva espaço — em vez
+        Vazia, a lista fica escondida e sua linha não reserva espaço, em vez
         de deixar uma caixa grande e em branco entre o rótulo "Nenhuma imagem
         selecionada" e os ajustes.
         """
@@ -662,7 +665,7 @@ class MainWindow(ctk.CTkFrame):
 
         dialog = ctk.CTkToplevel(self)
         dialog.title(t("help.title"))
-        dialog.geometry("460x420")
+        dialog.geometry("460x450")
         dialog.resizable(False, False)
         dialog.configure(fg_color=THEME.background)
         dialog.transient(self.winfo_toplevel())
@@ -686,6 +689,18 @@ class MainWindow(ctk.CTkFrame):
             anchor="w",
             wraplength=410,
         ).pack(padx=24, pady=(0, 16), anchor="w")
+
+        credit_row = ctk.CTkFrame(dialog, fg_color="transparent")
+        credit_row.pack(padx=24, pady=(0, 16), anchor="w")
+
+        ctk.CTkLabel(
+            credit_row,
+            text=t("help.credit_prefix"),
+            font=font(THEME.size_small),
+            text_color=THEME.text_muted,
+        ).pack(side="left")
+
+        LinkLabel(credit_row, DEVELOPER_NAME, DEVELOPER_URL).pack(side="left", padx=(4, 0))
 
         GhostButton(dialog, t("settings.close"), command=dialog.destroy).pack(
             padx=24, pady=(0, 24), fill="x"
@@ -940,7 +955,7 @@ class MainWindow(ctk.CTkFrame):
         """Reaplica as opções de pós-processamento ao recorte já calculado.
 
         Usa o recorte bruto em cache (resultado da IA) para a imagem atual,
-        sem rodar o modelo de novo — é isso que torna sliders e toggles
+        sem rodar o modelo de novo: é isso que torna sliders e toggles
         instantâneos depois do primeiro processamento.
 
         Returns:

@@ -6,12 +6,13 @@ visual e evitando repetição de parâmetros de estilo pela aplicação.
 
 from __future__ import annotations
 
+import webbrowser
 from collections.abc import Callable
 from typing import Any
 
 import customtkinter as ctk
 
-from config import THEME
+from config import DEVELOPER_NAME, DEVELOPER_URL, THEME
 
 
 def font(size: int = THEME.size_body, weight: str = "normal") -> ctk.CTkFont:
@@ -25,6 +26,38 @@ def font(size: int = THEME.size_body, weight: str = "normal") -> ctk.CTkFont:
         Objeto de fonte pronto para uso em widgets do CustomTkinter.
     """
     return ctk.CTkFont(family=THEME.font_family, size=size, weight=weight)
+
+
+class LinkLabel(ctk.CTkLabel):
+    """Rótulo clicável que abre uma URL no navegador padrão do sistema."""
+
+    def __init__(self, master: Any, text: str, url: str, **kwargs: Any) -> None:
+        """Inicializa o link.
+
+        Args:
+            master: Widget pai.
+            text: Texto exibido.
+            url: Endereço aberto ao clicar.
+            **kwargs: Parâmetros extras repassados ao ``CTkLabel``.
+        """
+        kwargs.setdefault("text_color", THEME.primary)
+        kwargs.setdefault("cursor", "hand2")
+        kwargs.setdefault("font", font(THEME.size_small, "bold"))
+        super().__init__(master, text=text, **kwargs)
+        self._url = url
+        self.bind("<Button-1>", self._open)
+
+    def _open(self, _event: Any) -> None:
+        """Abre a URL configurada no navegador padrão."""
+        webbrowser.open(self._url)
+
+    def set_url(self, url: str) -> None:
+        """Atualiza o endereço aberto ao clicar.
+
+        Args:
+            url: Novo endereço.
+        """
+        self._url = url
 
 
 class Card(ctk.CTkFrame):
@@ -178,8 +211,8 @@ class SegmentedSelector(ctk.CTkFrame):
     """Seletor de opção única entre poucas alternativas nomeadas.
 
     Mostra um botão por opção (ex.: os modos de fundo, ou o formato de
-    exportação) numa grade de colunas fixas — o suficiente pra caber com
-    folga mesmo com a barra lateral estreitada — e destaca a opção ativa.
+    exportação) numa grade de colunas fixas, o suficiente pra caber com
+    folga mesmo com a barra lateral estreitada, e destaca a opção ativa.
     """
 
     def __init__(
@@ -442,6 +475,18 @@ class StatusBar(ctk.CTkFrame):
         """
         super().__init__(master, fg_color="transparent", height=26)
 
+        self.link_label: LinkLabel | None = None
+        if version:
+            self.link_label = LinkLabel(
+                self,
+                DEVELOPER_NAME,
+                DEVELOPER_URL,
+                font=font(THEME.size_small),
+                text_color=THEME.primary,
+            )
+            self.link_label.pack(side="right", padx=(0, 12))
+        
+
         self.version_label: ctk.CTkLabel | None = None
         if version:
             self.version_label = ctk.CTkLabel(
@@ -452,6 +497,7 @@ class StatusBar(ctk.CTkFrame):
             )
             self.version_label.pack(side="right", padx=(0, 12))
 
+        
         self.dot = ctk.CTkLabel(
             self,
             text="●",

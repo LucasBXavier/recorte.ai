@@ -35,7 +35,7 @@ def _build_root() -> ctk.CTk:
 
     O ``tkinterdnd2`` precisa injetar seu wrapper na raiz do Tk. Quando a
     biblioteca não está instalada, o aplicativo continua funcionando
-    normalmente — apenas sem arrastar e soltar.
+    normalmente, apenas sem arrastar e soltar.
 
     Returns:
         A janela raiz configurada.

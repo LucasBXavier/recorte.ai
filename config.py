@@ -141,6 +141,10 @@ APP_VERSION: str = "1.0.0"
 WINDOW_SIZE: tuple[int, int] = (1180, 840)
 WINDOW_MIN_SIZE: tuple[int, int] = (980, 700)
 
+#: Créditos exibidos na janela de Ajuda, com link para o site do autor.
+DEVELOPER_NAME: str = "Lucas Boareto"
+DEVELOPER_URL: str = "https://lucasboareto.vercel.app"
+
 # --------------------------------------------------------------------------- #
 # Layout responsivo
 # --------------------------------------------------------------------------- #

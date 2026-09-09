@@ -1,7 +1,7 @@
 # Recorte.ai
 
 Aplicativo desktop para Windows que remove o fundo de imagens com inteligência
-artificial, **100% local** — nenhuma imagem sai do seu computador.
+artificial, **100% local**: nenhuma imagem sai do seu computador.
 
 Três passos: selecionar → ajustar o fundo (remover, trocar ou desfocar) → salvar em PNG ou WEBP.
 
@@ -16,7 +16,7 @@ Três passos: selecionar → ajustar o fundo (remover, trocar ou desfocar) → s
 - Ajustes: manter resolução, melhorar bordas, suavizar contorno, recorte automático
 - **Troca de fundo**: transparente, cor sólida, imagem personalizada ou desfoque do fundo original
 - **Pré-visualização ao vivo**: qualquer ajuste (bordas, suavização, fundo, redimensionamento) atualiza
-  o resultado instantaneamente, reaproveitando o recorte da IA — sem precisar rodar o modelo de novo
+  o resultado instantaneamente, reaproveitando o recorte da IA, sem precisar rodar o modelo de novo
 - **Processamento em lote** com progresso ("Imagem 3 de 15…"), cancelamento e pré-visualização ao vivo de cada resultado
 - Exportação em **PNG ou WEBP** (com controle de qualidade), preservando a resolução original ou
   **redimensionando para um tamanho máximo**, além de **cópia direta para a área de transferência**
@@ -80,13 +80,13 @@ removedor-fundo-ia/
 │
 ├── requirements.txt
 ├── app.spec                    # build com console (debug)
-├── app_gui.spec                # build sem console — o que vira o instalador
+├── app_gui.spec                # build sem console, o que vira o instalador
 └── installer.iss               # script do Inno Setup (instalador .exe)
 ```
 
 ### Como as camadas se separam
 
-- **`services/`** não importa nada de interface — pode ser usado em scripts ou testes.
+- **`services/`** não importa nada de interface: pode ser usado em scripts ou testes.
 - **`ui/`** não contém regra de negócio: apenas dispara o pipeline e reage a eventos.
 - A comunicação thread → interface acontece por uma `queue.Queue` lida a cada 80 ms,
   então a janela nunca congela e não há acesso ao Tkinter fora da thread principal.
@@ -125,8 +125,8 @@ pyinstaller --onefile --windowed --icon assets/icon.ico ^
 Ou usando um dos specs já prontos (recomendado):
 
 ```bash
-pyinstaller app.spec        # com console — útil pra ver tracebacks ao debugar
-pyinstaller app_gui.spec    # sem console — o que os usuários finais devem rodar
+pyinstaller app.spec        # com console, útil pra ver tracebacks ao debugar
+pyinstaller app_gui.spec    # sem console, o que os usuários finais devem rodar
 ```
 
 O executável fica em `dist/`. O `app_gui.spec` é o que o instalador (abaixo)
@@ -143,8 +143,8 @@ desinstalador, sem precisar de permissão de administrador):
 
 1. Instale o [Inno Setup](https://jrsoftware.org/isdl.php) (gratuito).
 2. Gere `dist/app_gui.exe` primeiro (`pyinstaller app_gui.spec`).
-3. Abra `installer.iss` no Inno Setup Compiler e clique em **Compile**
-   — ou pela linha de comando:
+3. Abra `installer.iss` no Inno Setup Compiler e clique em **Compile**,
+   ou pela linha de comando:
    ```bash
    "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
    ```
@@ -167,7 +167,7 @@ Nenhuma falha fecha o aplicativo. Cada situação tem uma mensagem própria:
 | Modelo de IA | "Não foi possível carregar o modelo de IA…" |
 | Erro inesperado | Diálogo genérico + traceback no console; o app segue aberto |
 
-No modo lote, uma imagem com erro **não interrompe** as demais — o resumo final
+No modo lote, uma imagem com erro **não interrompe** as demais: o resumo final
 lista o que falhou.
 
 ---

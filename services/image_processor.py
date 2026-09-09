@@ -221,7 +221,7 @@ class ImageProcessor:
     def resize_to_max(image: Image.Image, max_size: int) -> Image.Image:
         """Redimensiona a imagem para que o maior lado não ultrapasse ``max_size``.
 
-        Nunca amplia a imagem — apenas encolhe quando necessário.
+        Nunca amplia a imagem, apenas encolhe quando necessário.
 
         Args:
             image: Imagem a redimensionar.

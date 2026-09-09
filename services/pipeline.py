@@ -72,7 +72,7 @@ class RemovalPipeline:
     # ------------------------------------------------------------------ #
 
     def remove_background_only(self, path: Path) -> RawCutout:
-        """Executa somente a remoção de fundo — a etapa cara do processamento.
+        """Executa somente a remoção de fundo, a etapa cara do processamento.
 
         Separar essa etapa do pós-processamento permite reaplicar ajustes
         (suavização, fundo, redimensionamento) instantaneamente, sem rodar o

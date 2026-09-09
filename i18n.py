@@ -2,7 +2,7 @@
 
 Guarda um dicionário de traduções por idioma e o idioma ativo em memória.
 Widgets que precisam ser retextualizados quando o idioma muda (botões,
-rótulos fixos etc.) chamam :func:`t` de novo — não há binding automático,
+rótulos fixos etc.) chamam :func:`t` de novo: não há binding automático,
 quem monta a interface é responsável por reaplicar os textos (veja
 ``MainWindow._apply_language``).
 
@@ -74,7 +74,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "status.cancelling": "Cancelando após a imagem atual…",
         "status.loaded": "{name} carregada.",
         "status.ignored_files": "{n} arquivo(s) ignorado(s) por formato não suportado.",
-        "status.adjust_changed": "Ajuste alterado — clique em “{action}” para aplicar.",
+        "status.adjust_changed": "Ajuste alterado. Clique em “{action}” para aplicar.",
         "status.single_done": "Pronto! Clique em “{save}” para salvar.",
         "status.batch_success": "{ok} imagem(ns) salva(s) em {dest}",
         "status.batch_partial": "{ok} concluída(s), {fail} com erro.",
@@ -114,26 +114,27 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "settings.language_label": "Idioma",
         "settings.close": "Fechar",
         "help.title": "Ajuda",
+        "help.credit_prefix": "Desenvolvido por",
         "help.body": (
             "Como usar:\n"
             "1. Selecione imagens (clique ou arraste e solte).\n"
             "2. Ajuste as opções: recorte, bordas e fundo (transparente, cor, "
             "imagem ou desfoque).\n"
-            "3. Clique no botão de ação para processar e salvar — ou copie o "
+            "3. Clique no botão de ação para processar e salvar, ou copie o "
             "resultado direto para a área de transferência.\n\n"
             "Dicas:\n"
             "• Arraste a divisória entre a barra lateral e a pré-visualização "
             "para redimensionar a janela.\n"
             "• Selecione várias imagens para processar em lote; clique em "
             "cada uma na fila para ver o resultado.\n"
-            "• Nenhuma imagem sai do seu computador — todo o processamento é local.\n\n"
+            "• Nenhuma imagem sai do seu computador: todo o processamento é local.\n\n"
             "Atalhos de teclado:\n"
             "Ctrl+O selecionar · Enter processar · Ctrl+S salvar · "
             "Ctrl+C copiar · Delete limpar"
         ),
     },
     "en": {
-        "app.subtitle": "Local background removal — your images never leave your computer",
+        "app.subtitle": "Local background removal: your images never leave your computer",
         "header.help_button": "❓ Help",
         "header.settings_button": "⚙ Options",
         "step1.title": "1 · Choose",
@@ -185,7 +186,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "status.cancelling": "Cancelling after the current image…",
         "status.loaded": "{name} loaded.",
         "status.ignored_files": "{n} file(s) ignored due to unsupported format.",
-        "status.adjust_changed": "Setting changed — click “{action}” to apply.",
+        "status.adjust_changed": "Setting changed. Click “{action}” to apply.",
         "status.single_done": "Done! Click “{save}” to save.",
         "status.batch_success": "{ok} image(s) saved to {dest}",
         "status.batch_partial": "{ok} completed, {fail} failed.",
@@ -225,19 +226,20 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "settings.language_label": "Language",
         "settings.close": "Close",
         "help.title": "Help",
+        "help.credit_prefix": "Developed by",
         "help.body": (
             "How to use it:\n"
             "1. Select images (click or drag and drop).\n"
             "2. Adjust the options: crop, edges and background (transparent, "
             "color, image or blur).\n"
-            "3. Click the action button to process and save — or copy the "
+            "3. Click the action button to process and save, or copy the "
             "result straight to the clipboard.\n\n"
             "Tips:\n"
             "• Drag the divider between the sidebar and the preview to "
             "resize the window.\n"
             "• Select several images to process them in batch; click each "
             "one in the queue to see its result.\n"
-            "• No image ever leaves your computer — all processing is local.\n\n"
+            "• No image ever leaves your computer: all processing is local.\n\n"
             "Keyboard shortcuts:\n"
             "Ctrl+O select · Enter process · Ctrl+S save · "
             "Ctrl+C copy · Delete clear"
