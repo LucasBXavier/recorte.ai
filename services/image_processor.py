@@ -52,6 +52,8 @@ class ImageProcessor:
             raise InvalidImageError(
                 f"O arquivo não foi encontrado:\n{file_path.name}",
                 detail=str(file_path),
+                key="error.file_not_found",
+                params={"name": file_path.name},
             )
 
         if not ImageProcessor.is_supported(file_path):
@@ -60,6 +62,8 @@ class ImageProcessor:
                 f"Formato não suportado: {file_path.suffix or 'sem extensão'}.\n"
                 f"Use um destes formatos: {supported}.",
                 detail=str(file_path),
+                key="error.unsupported_format",
+                params={"ext": file_path.suffix or "sem extensão", "supported": supported},
             )
 
         try:
@@ -71,11 +75,15 @@ class ImageProcessor:
                 f"Não foi possível ler a imagem:\n{file_path.name}\n"
                 "O arquivo pode estar corrompido ou não ser uma imagem válida.",
                 detail=str(exc),
+                key="error.corrupted_unreadable",
+                params={"name": file_path.name},
             ) from exc
         except OSError as exc:
             raise CorruptedFileError(
                 f"O arquivo parece estar corrompido ou incompleto:\n{file_path.name}",
                 detail=str(exc),
+                key="error.corrupted_incomplete",
+                params={"name": file_path.name},
             ) from exc
 
         return image
@@ -193,8 +201,13 @@ class ImageProcessor:
         if mode == "color":
             background = Image.new("RGBA", image.size, options.background_color)
         elif mode == "blur":
-            base = original if original is not None else image
-            base = base.convert("RGB")
+            if original is None:
+                # Sem a imagem original não há o que desfocar de verdade,
+                # então mantém o recorte como está, igual ao modo "image"
+                # sem caminho configurado, em vez de desfocar o recorte
+                # sobre si mesmo.
+                return image
+            base = original.convert("RGB")
             if base.size != image.size:
                 base = ImageProcessor._cover_resize(base, image.size)
             radius = max(0.0, options.background_blur_radius)

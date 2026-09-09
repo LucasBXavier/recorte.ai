@@ -1,7 +1,7 @@
 """Verificação de novas versões via GitHub Releases.
 
 Faz uma única chamada HTTP à API pública do GitHub ao abrir o aplicativo,
-sem autenticação — o que só funciona se o repositório em :data:`config.UPDATE_REPO`
+sem autenticação: só funciona se o repositório em :data:`config.UPDATE_REPO`
 (ou ao menos seus Releases) for público. Qualquer falha na checagem é
 silenciosa: sem internet, repositório ainda sem nenhum release publicado,
 ou limite de requisições da API atingido são todos tratados da mesma forma,

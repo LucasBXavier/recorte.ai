@@ -45,6 +45,7 @@ class ClipboardError(AppError):
     """Falha ao copiar a imagem para a área de transferência do Windows."""
 
     title = "Erro ao copiar"
+    title_key = "error.clipboard_title"
 
 
 def _alloc_global(payload: bytes) -> int:
@@ -62,14 +63,16 @@ def _alloc_global(payload: bytes) -> int:
     handle = _kernel32.GlobalAlloc(GMEM_MOVEABLE, ctypes.c_size_t(len(payload)))
     if not handle:
         raise ClipboardError(
-            "Não foi possível alocar memória para copiar a imagem."
+            "Não foi possível alocar memória para copiar a imagem.",
+            key="error.clipboard_alloc",
         )
 
     locked = _kernel32.GlobalLock(handle)
     if not locked:
         _kernel32.GlobalFree(handle)
         raise ClipboardError(
-            "Não foi possível preparar os dados para a área de transferência."
+            "Não foi possível preparar os dados para a área de transferência.",
+            key="error.clipboard_lock",
         )
 
     ctypes.memmove(locked, payload, len(payload))
@@ -77,16 +80,21 @@ def _alloc_global(payload: bytes) -> int:
     return handle
 
 
-def _set_format(fmt: int, payload: bytes) -> None:
+def _set_format(fmt: int, payload: bytes) -> bool:
     """Grava um formato de dado na área de transferência já aberta.
 
     Args:
         fmt: Identificador do formato (``CF_DIB`` ou um formato registrado).
         payload: Bytes a gravar.
+
+    Returns:
+        ``True`` se o Windows aceitou o formato, ``False`` caso contrário.
     """
     handle = _alloc_global(payload)
     if not _user32.SetClipboardData(fmt, handle):
         _kernel32.GlobalFree(handle)
+        return False
+    return True
 
 
 def copy_image(image: Image.Image) -> None:
@@ -118,10 +126,17 @@ def copy_image(image: Image.Image) -> None:
         raise ClipboardError(
             "Não foi possível abrir a área de transferência.\n"
             "Feche outros programas que possam estar usando-a e tente novamente.",
+            key="error.clipboard_open",
         )
     try:
         _user32.EmptyClipboard()
-        _set_format(png_format, png_bytes)
-        _set_format(CF_DIB, dib_bytes)
+        png_ok = _set_format(png_format, png_bytes)
+        dib_ok = _set_format(CF_DIB, dib_bytes)
     finally:
         _user32.CloseClipboard()
+
+    if not (png_ok or dib_ok):
+        raise ClipboardError(
+            "Não foi possível copiar a imagem para a área de transferência.",
+            key="error.clipboard_copy_failed",
+        )

@@ -107,6 +107,8 @@ class ExportService:
             raise ExportError(
                 f"Não foi possível criar a pasta de destino:\n{target.parent}",
                 detail=str(exc),
+                key="error.export_mkdir_failed",
+                params={"folder": str(target.parent)},
             ) from exc
 
         payload = image if image.mode == "RGBA" else image.convert("RGBA")
@@ -118,12 +120,16 @@ class ExportService:
                 f"Sem permissão para salvar em:\n{target}\n"
                 "Feche o arquivo se ele estiver aberto ou escolha outra pasta.",
                 detail=str(exc),
+                key="error.export_permission",
+                params={"path": str(target)},
             ) from exc
         except OSError as exc:
             raise ExportError(
                 f"Não foi possível salvar a imagem:\n{target.name}\n"
                 "Verifique o espaço em disco e tente novamente.",
                 detail=str(exc),
+                key="error.export_os_error",
+                params={"name": target.name},
             ) from exc
 
         return target

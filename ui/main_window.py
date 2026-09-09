@@ -64,6 +64,12 @@ from ui.components import (
 )
 from ui.preview import PreviewArea
 
+#: Quantos recortes brutos (para pré-visualização ao vivo sem reprocessar)
+#: ficam em cache ao mesmo tempo. Acima disso, os mais antigos são
+#: descartados: evita que lotes grandes com fotos de alta resolução
+#: acumulem centenas de imagens inteiras na memória indefinidamente.
+_MAX_CACHED_RAW_CUTOUTS = 16
+
 #: Chave de tradução do verbo de ação exibido, de acordo com o modo de fundo.
 _ACTION_KEYS: dict[str, str] = {
     "transparent": "bg.action.transparent",
@@ -100,7 +106,11 @@ class MainWindow(ctk.CTkFrame):
 
         preferences = load_preferences()
         set_language(preferences.language)
-        self._sidebar_width = preferences.sidebar_width
+        # Clampado como em ``_do_sidebar_drag``: um preferences.json corrompido
+        # ou editado à mão não pode produzir um layout quebrado no arranque.
+        self._sidebar_width = max(
+            SIDEBAR_MIN_WIDTH, min(SIDEBAR_MAX_WIDTH, preferences.sidebar_width)
+        )
 
         self._events: queue.Queue[tuple[str, Any]] = queue.Queue()
         self._paths: list[Path] = []
@@ -955,6 +965,23 @@ class MainWindow(ctk.CTkFrame):
     # Pré-visualização ao vivo
     # ------------------------------------------------------------------ #
 
+    def _cache_raw_cutout(self, index: int, raw: RawCutout) -> None:
+        """Guarda um recorte bruto em cache, com um limite de itens.
+
+        Além do índice atual, mantém só os últimos :data:`_MAX_CACHED_RAW_CUTOUTS`
+        itens: sem isso, um lote grande com fotos de alta resolução manteria
+        uma imagem inteira por item na memória indefinidamente, até o usuário
+        limpar a fila.
+
+        Args:
+            index: Posição da imagem na fila (base zero).
+            raw: Recorte bruto a guardar.
+        """
+        self._raw_cutouts[index] = raw
+        while len(self._raw_cutouts) > _MAX_CACHED_RAW_CUTOUTS:
+            oldest = next(iter(self._raw_cutouts))
+            del self._raw_cutouts[oldest]
+
     def _refresh_current_preview(self) -> bool:
         """Reaplica as opções de pós-processamento ao recorte já calculado.
 
@@ -1367,7 +1394,7 @@ class MainWindow(ctk.CTkFrame):
             source: Imagem original (antes da remoção de fundo).
             image: Imagem final, já com os ajustes aplicados.
         """
-        self._raw_cutouts[self._current_index] = (cutout, original_size, source)
+        self._cache_raw_cutout(self._current_index, (cutout, original_size, source))
         self._result = image
         self._results[self._current_index] = image
         self._set_busy(False)
@@ -1389,13 +1416,18 @@ class MainWindow(ctk.CTkFrame):
             index: Posição da imagem na fila (base zero).
             result: Resultado individual retornado pelo pipeline.
             image: Imagem processada, ou ``None`` se essa imagem falhou.
-            raw: Recorte bruto da IA para essa imagem, ou ``None`` se falhou.
+            raw: Recorte bruto da IA para essa imagem, preenchido sempre que
+                a remoção de fundo em si deu certo (mesmo que a exportação
+                para disco tenha falhado depois).
         """
+        # Guardado mesmo se a exportação falhar depois: a etapa cara (IA) já
+        # rodou, então vale a pena manter para reaproveitar sem reprocessar.
+        if raw is not None:
+            self._cache_raw_cutout(index, raw)
+
         if image is not None:
             self._results[index] = image
             self.file_list.mark_done(index)
-            if raw is not None:
-                self._raw_cutouts[index] = raw
         else:
             self.file_list.mark_error(index)
 
@@ -1403,6 +1435,8 @@ class MainWindow(ctk.CTkFrame):
             self._result = image
             if image is not None:
                 self.preview.show_result(image)
+            else:
+                self.preview.clear_result()
             self._set_buttons_state()
 
     def _on_batch_done(self, report: BatchReport, destination: Path) -> None:
@@ -1564,7 +1598,8 @@ class MainWindow(ctk.CTkFrame):
             error: Exceção capturada.
         """
         if isinstance(error, AppError):
-            title, message = error.title, error.message
+            title = t(error.title_key)
+            message = t(error.key, **error.params) if error.key else error.message
         else:
             title = t("error.generic_title")
             message = t("error.generic_body", type=type(error).__name__, error=error)

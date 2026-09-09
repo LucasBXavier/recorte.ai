@@ -87,6 +87,50 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "error.unexpected_batch": "Ocorreu um erro inesperado durante o lote.",
         "error.generic_title": "Ops, algo deu errado",
         "error.generic_body": "Ocorreu um erro inesperado.\n\n{type}: {error}",
+        "error.invalid_image_title": "Imagem inválida",
+        "error.corrupted_file_title": "Arquivo corrompido",
+        "error.model_title": "Erro no modelo de IA",
+        "error.export_title": "Erro ao salvar",
+        "error.clipboard_title": "Erro ao copiar",
+        "error.file_not_found": "O arquivo não foi encontrado:\n{name}",
+        "error.unsupported_format": (
+            "Formato não suportado: {ext}.\nUse um destes formatos: {supported}."
+        ),
+        "error.corrupted_unreadable": (
+            "Não foi possível ler a imagem:\n{name}\n"
+            "O arquivo pode estar corrompido ou não ser uma imagem válida."
+        ),
+        "error.corrupted_incomplete": "O arquivo parece estar corrompido ou incompleto:\n{name}",
+        "error.rembg_missing": (
+            "A biblioteca de IA (rembg) não está instalada.\n"
+            "Execute: pip install -r requirements.txt"
+        ),
+        "error.model_load_failed": (
+            "Não foi possível carregar o modelo de IA.\n"
+            "Verifique sua conexão na primeira execução. O modelo é "
+            "baixado uma única vez."
+        ),
+        "error.inference_failed": (
+            "O modelo de IA não conseguiu processar esta imagem.\n"
+            "Tente novamente ou use outra imagem."
+        ),
+        "error.unexpected_result": "O modelo de IA devolveu um resultado inesperado.",
+        "error.export_mkdir_failed": "Não foi possível criar a pasta de destino:\n{folder}",
+        "error.export_permission": (
+            "Sem permissão para salvar em:\n{path}\n"
+            "Feche o arquivo se ele estiver aberto ou escolha outra pasta."
+        ),
+        "error.export_os_error": (
+            "Não foi possível salvar a imagem:\n{name}\n"
+            "Verifique o espaço em disco e tente novamente."
+        ),
+        "error.clipboard_alloc": "Não foi possível alocar memória para copiar a imagem.",
+        "error.clipboard_lock": "Não foi possível preparar os dados para a área de transferência.",
+        "error.clipboard_open": (
+            "Não foi possível abrir a área de transferência.\n"
+            "Feche outros programas que possam estar usando-a e tente novamente."
+        ),
+        "error.clipboard_copy_failed": "Não foi possível copiar a imagem para a área de transferência.",
         "dialog.no_valid_images.title": "Nenhuma imagem válida",
         "dialog.no_valid_images.body": (
             "Não encontrei imagens suportadas nos itens selecionados.\n\n"
@@ -200,6 +244,49 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "error.unexpected_batch": "An unexpected error occurred during the batch.",
         "error.generic_title": "Something went wrong",
         "error.generic_body": "An unexpected error occurred.\n\n{type}: {error}",
+        "error.invalid_image_title": "Invalid image",
+        "error.corrupted_file_title": "Corrupted file",
+        "error.model_title": "AI model error",
+        "error.export_title": "Save error",
+        "error.clipboard_title": "Copy error",
+        "error.file_not_found": "The file was not found:\n{name}",
+        "error.unsupported_format": (
+            "Unsupported format: {ext}.\nUse one of these formats: {supported}."
+        ),
+        "error.corrupted_unreadable": (
+            "Could not read the image:\n{name}\n"
+            "The file may be corrupted or not a valid image."
+        ),
+        "error.corrupted_incomplete": "The file appears to be corrupted or incomplete:\n{name}",
+        "error.rembg_missing": (
+            "The AI library (rembg) is not installed.\n"
+            "Run: pip install -r requirements.txt"
+        ),
+        "error.model_load_failed": (
+            "Could not load the AI model.\n"
+            "Check your connection on first run: the model is downloaded only once."
+        ),
+        "error.inference_failed": (
+            "The AI model could not process this image.\n"
+            "Try again or use a different image."
+        ),
+        "error.unexpected_result": "The AI model returned an unexpected result.",
+        "error.export_mkdir_failed": "Could not create the destination folder:\n{folder}",
+        "error.export_permission": (
+            "No permission to save to:\n{path}\n"
+            "Close the file if it's open elsewhere, or choose another folder."
+        ),
+        "error.export_os_error": (
+            "Could not save the image:\n{name}\n"
+            "Check your disk space and try again."
+        ),
+        "error.clipboard_alloc": "Could not allocate memory to copy the image.",
+        "error.clipboard_lock": "Could not prepare the data for the clipboard.",
+        "error.clipboard_open": (
+            "Could not open the clipboard.\n"
+            "Close other programs that might be using it and try again."
+        ),
+        "error.clipboard_copy_failed": "Could not copy the image to the clipboard.",
         "dialog.no_valid_images.title": "No valid images",
         "dialog.no_valid_images.body": (
             "No supported images were found in the selected items.\n\n"

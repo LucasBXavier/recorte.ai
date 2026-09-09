@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import tkinter
 from typing import Any
 
 import customtkinter as ctk
@@ -81,10 +82,19 @@ class PreviewPane(ctk.CTkFrame):
         Args:
             image: Imagem a exibir, ou ``None`` para voltar ao estado vazio.
         """
+        # Cancela qualquer redesenho atrasado (agendado por ``_on_resize``)
+        # que ainda esteja pendente de uma imagem anterior. Sem isso, esse
+        # redesenho podia disparar depois, referenciando uma imagem já
+        # descartada e derrubando um TclError ("image ... doesn't exist").
+        if self._render_job is not None:
+            self.after_cancel(self._render_job)
+            self._render_job = None
+
         self._image = image
         if image is None:
             self._ctk_image = None
-            self.canvas.configure(image=None, text=self._placeholder)
+            self._clear_canvas_image()
+            self._safe_configure_canvas(text=self._placeholder)
             self.set_subtitle("")
             return
         self._render()
@@ -155,8 +165,47 @@ class PreviewPane(ctk.CTkFrame):
             )
 
         self._ctk_image = ctk.CTkImage(light_image=resized, dark_image=resized, size=target)
-        self.canvas.configure(image=self._ctk_image, text="")
+        self._safe_configure_canvas(image=self._ctk_image, text="")
         self._last_size = target
+
+    def _safe_configure_canvas(self, **kwargs: Any) -> None:
+        """Aplica ``configure`` no canvas, ignorando um TclError conhecido.
+
+        O CustomTkinter às vezes redesenha um rótulo de imagem de forma
+        atrasada internamente; se a imagem referenciada já tiver sido
+        descartada nesse meio-tempo (ex.: o usuário trocou de imagem rápido
+        demais), o Tk recusa com "image ... doesn't exist". É inofensivo: o
+        próximo redesenho real sempre usa a imagem correta, então o erro
+        pode ser ignorado com segurança em vez de aparecer para o usuário.
+
+        Args:
+            **kwargs: Repassados a ``self.canvas.configure``.
+        """
+        try:
+            self.canvas.configure(**kwargs)
+        except tkinter.TclError as exc:
+            if "doesn't exist" not in str(exc):
+                raise
+
+    def _clear_canvas_image(self) -> None:
+        """Limpa de vez a imagem exibida, inclusive no widget interno do Tk.
+
+        ``CTkLabel.configure(image=None)`` só atualiza o estado do wrapper do
+        CustomTkinter: não limpa a imagem do ``tkinter.Label`` real por
+        baixo dele. Isso deixa uma referência "pendurada" que, mais tarde,
+        colide com um nome de imagem do Tcl reaproveitado para a próxima
+        imagem carregada, fazendo esse próximo redesenho falhar em silêncio.
+        Limpar o rótulo interno diretamente evita esse estado inconsistente.
+        """
+        self._safe_configure_canvas(image=None)
+        try:
+            self.canvas._label.configure(image="")
+        except (AttributeError, tkinter.TclError):
+            # ``_label`` é um detalhe interno do CustomTkinter: se uma
+            # atualização da biblioteca renomear ou remover esse atributo,
+            # preferimos voltar ao comportamento antigo (que pode deixar uma
+            # referência de imagem pendurada) a mascarar um erro diferente.
+            pass
 
 
 class PreviewArea(ctk.CTkFrame):

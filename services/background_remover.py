@@ -104,6 +104,7 @@ class BackgroundRemover:
                     "A biblioteca de IA (rembg) não está instalada.\n"
                     "Execute: pip install -r requirements.txt",
                     detail=str(exc),
+                    key="error.rembg_missing",
                 ) from exc
 
             errors: list[str] = []
@@ -122,6 +123,7 @@ class BackgroundRemover:
                 "Verifique sua conexão na primeira execução. O modelo é "
                 "baixado uma única vez.",
                 detail=" | ".join(errors),
+                key="error.model_load_failed",
             )
 
     # ------------------------------------------------------------------ #
@@ -148,6 +150,7 @@ class BackgroundRemover:
             raise ModelError(
                 "A biblioteca de IA (rembg) não está instalada.",
                 detail=str(exc),
+                key="error.rembg_missing",
             ) from exc
 
         source = image if image.mode == "RGBA" else image.convert("RGBA")
@@ -167,12 +170,14 @@ class BackgroundRemover:
                 "O modelo de IA não conseguiu processar esta imagem.\n"
                 "Tente novamente ou use outra imagem.",
                 detail=f"{type(exc).__name__}: {exc}",
+                key="error.inference_failed",
             ) from exc
 
         if not isinstance(result, Image.Image):  # pragma: no cover - defensivo
             raise ModelError(
                 "O modelo de IA devolveu um resultado inesperado.",
                 detail=f"tipo={type(result)!r}",
+                key="error.unexpected_result",
             )
 
         return result if result.mode == "RGBA" else result.convert("RGBA")

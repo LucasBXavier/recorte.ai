@@ -40,6 +40,9 @@ def load_preferences() -> Preferences:
     except (OSError, ValueError):
         return Preferences()
 
+    if not isinstance(raw, dict):
+        return Preferences()
+
     return Preferences(
         language=str(raw.get("language", "pt")),
         sidebar_width=int(raw.get("sidebar_width", SIDEBAR_DEFAULT_WIDTH)),

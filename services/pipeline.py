@@ -131,7 +131,9 @@ class RemovalPipeline:
                 (com sucesso ou não), recebendo ``(índice, total, resultado,
                 imagem, recorte_bruto)``. Permite à interface exibir o
                 resultado assim que fica pronto, mesmo em lote, e reaplicar
-                ajustes depois sem rodar a IA de novo.
+                ajustes depois sem rodar a IA de novo. ``recorte_bruto`` vem
+                preenchido sempre que a remoção de fundo em si deu certo,
+                mesmo que a exportação para disco tenha falhado depois.
 
         Returns:
             Relatório com sucessos e falhas.
@@ -170,10 +172,9 @@ class RemovalPipeline:
 
             report.results.append(result)
             if on_item is not None:
-                on_item(
-                    index, total, result,
-                    image if result.success else None,
-                    raw if result.success else None,
-                )
+                # ``raw`` é repassado independente de ``result.success``: se a
+                # etapa cara (IA) deu certo mas só a exportação falhou, ainda
+                # vale a pena guardar o recorte para reaproveitar depois.
+                on_item(index, total, result, image if result.success else None, raw)
 
         return report
