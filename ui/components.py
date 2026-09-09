@@ -114,21 +114,23 @@ class OptionToggle(ctk.CTkFrame):
 
         self.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(
+        self._title_label = ctk.CTkLabel(
             self,
             text=title,
             font=font(THEME.size_body),
             text_color=THEME.text,
             anchor="w",
-        ).grid(row=0, column=0, sticky="w")
+        )
+        self._title_label.grid(row=0, column=0, sticky="w")
 
-        ctk.CTkLabel(
+        self._description_label = ctk.CTkLabel(
             self,
             text=description,
             font=font(THEME.size_small),
             text_color=THEME.text_muted,
             anchor="w",
-        ).grid(row=1, column=0, sticky="w")
+        )
+        self._description_label.grid(row=1, column=0, sticky="w")
 
         self.switch = ctk.CTkSwitch(
             self,
@@ -160,6 +162,209 @@ class OptionToggle(ctk.CTkFrame):
             enabled: ``True`` para habilitar.
         """
         self.switch.configure(state="normal" if enabled else "disabled")
+
+    def set_texts(self, title: str, description: str) -> None:
+        """Atualiza o título e a descrição exibidos (ex.: troca de idioma).
+
+        Args:
+            title: Novo nome da opção.
+            description: Nova explicação em uma linha.
+        """
+        self._title_label.configure(text=title)
+        self._description_label.configure(text=description)
+
+
+class SegmentedSelector(ctk.CTkFrame):
+    """Seletor de opção única entre poucas alternativas nomeadas.
+
+    Mostra um botão por opção (ex.: os modos de fundo, ou o formato de
+    exportação) numa grade de colunas fixas — o suficiente pra caber com
+    folga mesmo com a barra lateral estreitada — e destaca a opção ativa.
+    """
+
+    def __init__(
+        self,
+        master: Any,
+        modes: tuple[str, ...],
+        labels: dict[str, str],
+        command: Callable[[str], None] | None = None,
+        initial: str = "transparent",
+        columns: int = 2,
+    ) -> None:
+        """Inicializa o seletor.
+
+        Args:
+            master: Widget pai.
+            modes: Chaves internas das opções disponíveis, na ordem de exibição.
+            labels: Rótulo exibido para cada chave de ``modes``.
+            command: Callback chamado com a chave da opção escolhida.
+            initial: Opção inicialmente selecionada.
+            columns: Número de colunas da grade de botões.
+        """
+        super().__init__(master, fg_color="transparent")
+        self._command = command
+        self._active = initial
+        self._modes = modes
+        self._columns = max(1, columns)
+        self._buttons: dict[str, ctk.CTkButton] = {}
+
+        for column in range(self._columns):
+            self.grid_columnconfigure(column, weight=1, uniform="segmented")
+
+        for index, key in enumerate(modes):
+            row, column = divmod(index, self._columns)
+            button = ctk.CTkButton(
+                self,
+                text=labels.get(key, key),
+                height=30,
+                corner_radius=8,
+                fg_color=THEME.primary if key == initial else THEME.surface,
+                hover_color=THEME.primary_hover if key == initial else THEME.card_hover,
+                text_color=THEME.text if key == initial else THEME.text_secondary,
+                font=font(THEME.size_small),
+                command=lambda k=key: self._select(k),
+            )
+            button.grid(
+                row=row,
+                column=column,
+                sticky="ew",
+                padx=(0 if column == 0 else 4, 0),
+                pady=(0 if row == 0 else 4, 0),
+            )
+            self._buttons[key] = button
+
+    def set_labels(self, labels: dict[str, str]) -> None:
+        """Atualiza os textos dos botões (ex.: troca de idioma).
+
+        Args:
+            labels: Rótulo exibido para cada chave de modo conhecida.
+        """
+        for key, button in self._buttons.items():
+            if key in labels:
+                button.configure(text=labels[key])
+
+    def _select(self, key: str) -> None:
+        """Ativa um modo e repassa a escolha ao callback.
+
+        Args:
+            key: Chave do modo escolhido.
+        """
+        self._active = key
+        for candidate, button in self._buttons.items():
+            active = candidate == key
+            button.configure(
+                fg_color=THEME.primary if active else THEME.surface,
+                hover_color=THEME.primary_hover if active else THEME.card_hover,
+                text_color=THEME.text if active else THEME.text_secondary,
+            )
+        if self._command is not None:
+            self._command(key)
+
+    def set_enabled(self, enabled: bool) -> None:
+        """Habilita ou desabilita todos os botões do seletor.
+
+        Args:
+            enabled: ``True`` para habilitar.
+        """
+        state = "normal" if enabled else "disabled"
+        for button in self._buttons.values():
+            button.configure(state=state)
+
+    @property
+    def value(self) -> str:
+        """Chave do modo atualmente selecionado."""
+        return self._active
+
+
+class LabeledSlider(ctk.CTkFrame):
+    """Slider com rótulo e valor numérico, para ajustes finos em tempo real.
+
+    O ``command`` é chamado continuamente enquanto o usuário arrasta, então é
+    ideal para pré-visualizações ao vivo (ex.: intensidade de um desfoque).
+    """
+
+    def __init__(
+        self,
+        master: Any,
+        label: str,
+        from_: float,
+        to: float,
+        initial: float,
+        command: Callable[[float], None] | None = None,
+        value_format: str = "{:.1f}",
+    ) -> None:
+        """Inicializa o slider.
+
+        Args:
+            master: Widget pai.
+            label: Texto exibido à esquerda, acima da barra.
+            from_: Valor mínimo.
+            to: Valor máximo.
+            initial: Valor inicial.
+            command: Callback chamado com o novo valor a cada movimento.
+            value_format: Máscara usada para exibir o valor atual (ex.:
+                ``"{:.0f}px"``).
+        """
+        super().__init__(master, fg_color="transparent")
+        self._command = command
+        self._value_format = value_format
+        self.grid_columnconfigure(0, weight=1)
+
+        header = ctk.CTkFrame(self, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew")
+        header.grid_columnconfigure(0, weight=1)
+
+        self._label = ctk.CTkLabel(
+            header, text=label, font=font(THEME.size_small),
+            text_color=THEME.text_secondary, anchor="w",
+        )
+        self._label.grid(row=0, column=0, sticky="w")
+
+        self._value_label = ctk.CTkLabel(
+            header, text=value_format.format(initial),
+            font=font(THEME.size_small), text_color=THEME.text_muted,
+        )
+        self._value_label.grid(row=0, column=1, sticky="e")
+
+        self.slider = ctk.CTkSlider(
+            self,
+            from_=from_,
+            to=to,
+            progress_color=THEME.primary,
+            button_color=THEME.text,
+            button_hover_color=THEME.text_secondary,
+            fg_color=THEME.border,
+            command=self._on_change,
+        )
+        self.slider.set(initial)
+        self.slider.grid(row=1, column=0, sticky="ew", pady=(4, 0))
+
+    def _on_change(self, value: float) -> None:
+        """Atualiza o rótulo de valor e repassa a mudança ao callback."""
+        self._value_label.configure(text=self._value_format.format(value))
+        if self._command is not None:
+            self._command(float(value))
+
+    def set_label(self, text: str) -> None:
+        """Atualiza o rótulo exibido (ex.: troca de idioma).
+
+        Args:
+            text: Novo texto do rótulo.
+        """
+        self._label.configure(text=text)
+
+    def set_enabled(self, enabled: bool) -> None:
+        """Habilita ou desabilita o slider.
+
+        Args:
+            enabled: ``True`` para habilitar.
+        """
+        self.slider.configure(state="normal" if enabled else "disabled")
+
+    @property
+    def value(self) -> float:
+        """Valor atual do slider."""
+        return float(self.slider.get())
 
 
 class ProgressPanel(ctk.CTkFrame):
@@ -225,15 +430,28 @@ class ProgressPanel(ctk.CTkFrame):
 
 
 class StatusBar(ctk.CTkFrame):
-    """Rodapé com um indicador colorido e uma mensagem curta."""
+    """Rodapé com a versão do app, um indicador colorido e uma mensagem curta."""
 
-    def __init__(self, master: Any) -> None:
+    def __init__(self, master: Any, version: str = "") -> None:
         """Inicializa a barra de status.
 
         Args:
             master: Widget pai.
+            version: Texto de versão exibido no canto esquerdo (ex.: ``"v1.0.0"``).
+                Omitido se vazio.
         """
         super().__init__(master, fg_color="transparent", height=26)
+
+        self.version_label: ctk.CTkLabel | None = None
+        if version:
+            self.version_label = ctk.CTkLabel(
+                self,
+                text=version,
+                font=font(THEME.size_small),
+                text_color=THEME.text_muted,
+            )
+            self.version_label.pack(side="right", padx=(0, 12))
+
         self.dot = ctk.CTkLabel(
             self,
             text="●",
@@ -288,6 +506,8 @@ class FileList(ctk.CTkScrollableFrame):
         )
         self._on_select = on_select
         self._buttons: list[ctk.CTkButton] = []
+        self._names: list[str] = []
+        self._marks: list[str] = []
         self.grid_columnconfigure(0, weight=1)
 
     def set_items(self, names: list[str], selected: int = 0) -> None:
@@ -300,6 +520,8 @@ class FileList(ctk.CTkScrollableFrame):
         for button in self._buttons:
             button.destroy()
         self._buttons.clear()
+        self._names = list(names)
+        self._marks = ["" for _ in names]
 
         for index, name in enumerate(names):
             button = ctk.CTkButton(
@@ -320,15 +542,56 @@ class FileList(ctk.CTkScrollableFrame):
     def highlight(self, index: int) -> None:
         """Destaca visualmente um item da lista.
 
+        Preserva a cor de status (concluído/erro) de itens já processados,
+        mesmo quando eles não estão selecionados.
+
         Args:
             index: Índice do item a destacar.
         """
+        mark_colors = {"✓": THEME.success, "!": THEME.danger}
         for position, button in enumerate(self._buttons):
             active = position == index
+            mark = self._marks[position] if position < len(self._marks) else ""
+            default_color = THEME.text if active else THEME.text_secondary
             button.configure(
                 fg_color=THEME.card if active else "transparent",
-                text_color=THEME.text if active else THEME.text_secondary,
+                text_color=mark_colors.get(mark, default_color),
             )
+
+    def _label_for(self, index: int) -> str:
+        """Monta o texto exibido para um item, incluindo seu marcador de status.
+
+        Args:
+            index: Índice do item.
+
+        Returns:
+            Texto pronto para o botão da lista.
+        """
+        mark = self._marks[index] if index < len(self._marks) else ""
+        prefix = f"{mark} " if mark else "  "
+        return f"{prefix}{self._names[index]}"
+
+    def mark_done(self, index: int) -> None:
+        """Sinaliza que um item já foi processado com sucesso.
+
+        Args:
+            index: Índice do item concluído.
+        """
+        if not (0 <= index < len(self._buttons)):
+            return
+        self._marks[index] = "✓"
+        self._buttons[index].configure(text=self._label_for(index), text_color=THEME.success)
+
+    def mark_error(self, index: int) -> None:
+        """Sinaliza que o processamento de um item falhou.
+
+        Args:
+            index: Índice do item com erro.
+        """
+        if not (0 <= index < len(self._buttons)):
+            return
+        self._marks[index] = "!"
+        self._buttons[index].configure(text=self._label_for(index), text_color=THEME.danger)
 
     def _select(self, index: int) -> None:
         """Trata o clique em um item.

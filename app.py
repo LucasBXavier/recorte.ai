@@ -1,4 +1,4 @@
-"""Ponto de entrada do Removedor de Fundo IA.
+"""Ponto de entrada do Recorte.ai.
 
 Executar::
 

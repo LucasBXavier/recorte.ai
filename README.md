@@ -1,4 +1,4 @@
-# Removedor de Fundo IA
+# Recorte.ai
 
 Aplicativo desktop para Windows que remove o fundo de imagens com inteligência
 artificial, **100% local** — nenhuma imagem sai do seu computador.
@@ -12,10 +12,19 @@ Três passos: selecionar → remover fundo → salvar PNG transparente.
 - Seleção por clique **ou arrastar e soltar** (arquivos ou pastas inteiras)
 - Formatos aceitos: **PNG, JPG, JPEG, WEBP**
 - Pré-visualização **antes / depois** lado a lado, com xadrez de transparência
-- Modelo `isnet-general-use`, com **fallback automático** para `u2net`
+- Modelo `isnet-general-use` com **alpha matting**, e **fallback automático** para `u2net`
 - Ajustes: manter resolução, melhorar bordas, suavizar contorno, recorte automático
-- **Processamento em lote** com progresso ("Imagem 3 de 15…") e cancelamento
-- Exportação em PNG transparente preservando a resolução original
+- **Troca de fundo**: transparente, cor sólida, imagem personalizada ou desfoque do fundo original
+- **Pré-visualização ao vivo**: qualquer ajuste (bordas, suavização, fundo, redimensionamento) atualiza
+  o resultado instantaneamente, reaproveitando o recorte da IA — sem precisar rodar o modelo de novo
+- **Processamento em lote** com progresso ("Imagem 3 de 15…"), cancelamento e pré-visualização ao vivo de cada resultado
+- Exportação em **PNG ou WEBP** (com controle de qualidade), preservando a resolução original ou
+  **redimensionando para um tamanho máximo**, além de **cópia direta para a área de transferência**
+- **Atalhos de teclado**: Ctrl+O selecionar, Enter processar, Ctrl+S salvar, Ctrl+C copiar, Delete limpar
+- Layout **responsivo**, com barra lateral de largura **ajustável arrastando a divisória** e rolagem
+  interna nos ajustes quando não cabem na tela
+- Botões de **Opções** (troca de idioma: português/inglês, fácil de estender) e **Ajuda** no cabeçalho
+- Preferências (idioma, largura da barra lateral) salvas entre execuções
 - Interface responsiva: todo o processamento roda em thread separada
 
 ---
@@ -48,17 +57,20 @@ removedor-fundo-ia/
 │
 ├── app.py                      # ponto de entrada, janela raiz e tratamento global de erros
 ├── config.py                   # tema, formatos, modelos e dataclasses compartilhadas
+├── i18n.py                     # traduções da interface (pt/en) e idioma ativo
+├── preferences.py              # idioma e largura da barra lateral, salvos entre execuções
 │
 ├── ui/
 │   ├── components.py           # Card, botões, toggles, progresso, status, lista de arquivos
 │   ├── preview.py              # painéis "antes/depois" com xadrez de transparência
-│   └── main_window.py          # layout, estados e comunicação com as threads
+│   └── main_window.py          # layout responsivo, estados e comunicação com as threads
 │
 ├── services/
 │   ├── errors.py               # exceções de domínio com mensagens amigáveis
 │   ├── background_remover.py   # sessão do rembg, lazy loading e fallback de modelo
-│   ├── image_processor.py      # carregar, validar, refinar bordas, suavizar, recortar
+│   ├── image_processor.py      # carregar, validar, refinar bordas, suavizar, recortar, trocar fundo
 │   ├── export_service.py       # gravação de PNG e nomes de arquivo sem colisão
+│   ├── clipboard.py            # cópia de imagens para a área de transferência do Windows
 │   └── pipeline.py             # orquestra o fluxo completo (unitário e em lote)
 │
 ├── assets/
@@ -120,6 +132,23 @@ O executável fica em `dist/`.
 > a cada execução. Para uso diário, remova `--onefile` (ou use `onedir` no spec)
 > e o app abre bem mais rápido.
 
+### Gerar o instalador (opcional)
+
+Para distribuir o app como um instalador de verdade (atalho no menu Iniciar,
+desinstalador, sem precisar de permissão de administrador):
+
+1. Instale o [Inno Setup](https://jrsoftware.org/isdl.php) (gratuito).
+2. Gere `dist/app_gui.exe` primeiro (`pyinstaller app_gui.spec`).
+3. Abra `installer.iss` no Inno Setup Compiler e clique em **Compile**
+   — ou pela linha de comando:
+   ```bash
+   "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+   ```
+4. O instalador fica em `Output\Recorte.ai-Setup-1.0.0.exe`.
+
+Ao lançar uma nova versão, atualize `MyAppVersion` em `installer.iss` para
+bater com `APP_VERSION` em `config.py`.
+
 ---
 
 ## Tratamento de erros
@@ -143,7 +172,7 @@ lista o que falhou.
 
 A arquitetura já comporta, sem alterar a interface:
 
-- Troca de fundo (cor sólida, imagem ou desfoque) → novo método em `ImageProcessor`
-- Redimensionamento e compressão → novas opções em `ProcessingOptions`
-- Novos formatos de saída (WEBP, TIFF) → parâmetro em `ExportService`
+- Histórico/desfazer entre ajustes → aproveitaria o mesmo cache de recorte bruto da pré-visualização ao vivo
+- Novos formatos de saída (TIFF) → mais um ramo em `ExportService._save_as`
 - Outros modelos de IA (`isnet-anime`, `birefnet`) → parâmetro em `BackgroundRemover`
+- Mais idiomas na interface → nova entrada em `i18n._TRANSLATIONS`

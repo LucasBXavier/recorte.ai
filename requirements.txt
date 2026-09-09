@@ -1,4 +1,4 @@
-# Removedor de Fundo IA — dependências
+# Recorte.ai — dependências
 customtkinter>=5.2.2
 rembg[cpu]>=2.0.57
 onnxruntime>=1.17.0

@@ -12,7 +12,13 @@ from typing import Any
 
 from PIL import Image
 
-from config import FALLBACK_MODEL, PRIMARY_MODEL
+from config import (
+    ALPHA_MATTING_BACKGROUND_THRESHOLD,
+    ALPHA_MATTING_ERODE_SIZE,
+    ALPHA_MATTING_FOREGROUND_THRESHOLD,
+    FALLBACK_MODEL,
+    PRIMARY_MODEL,
+)
 from services.errors import ModelError
 
 
@@ -147,7 +153,15 @@ class BackgroundRemover:
         source = image if image.mode == "RGBA" else image.convert("RGBA")
 
         try:
-            result = rembg_remove(source, session=session, post_process_mask=True)
+            result = rembg_remove(
+                source,
+                session=session,
+                post_process_mask=True,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=ALPHA_MATTING_FOREGROUND_THRESHOLD,
+                alpha_matting_background_threshold=ALPHA_MATTING_BACKGROUND_THRESHOLD,
+                alpha_matting_erode_size=ALPHA_MATTING_ERODE_SIZE,
+            )
         except Exception as exc:  # noqa: BLE001 - erro do runtime da IA
             raise ModelError(
                 "O modelo de IA não conseguiu processar esta imagem.\n"

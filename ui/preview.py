@@ -8,6 +8,7 @@ import customtkinter as ctk
 from PIL import Image
 
 from config import THEME
+from i18n import t
 from services.image_processor import ImageProcessor
 from ui.components import font
 
@@ -39,6 +40,7 @@ class PreviewPane(ctk.CTkFrame):
 
         self._title = title
         self._placeholder = placeholder
+        self._subtitle = ""
         self._transparent_background = transparent_background
         self._image: Image.Image | None = None
         self._ctk_image: ctk.CTkImage | None = None
@@ -93,7 +95,21 @@ class PreviewPane(ctk.CTkFrame):
         Args:
             text: Informação adicional (ex.: "1920 × 1080").
         """
+        self._subtitle = text
         self.header.configure(text=self._title if not text else f"{self._title}   ·   {text}")
+
+    def set_labels(self, title: str, placeholder: str) -> None:
+        """Atualiza o título e o texto de estado vazio (ex.: troca de idioma).
+
+        Args:
+            title: Novo título exibido no cabeçalho.
+            placeholder: Novo texto mostrado quando não há imagem.
+        """
+        self._title = title
+        self._placeholder = placeholder
+        if self._image is None:
+            self.canvas.configure(text=placeholder)
+        self.set_subtitle(self._subtitle)
 
     def clear(self) -> None:
         """Volta o painel ao estado vazio."""
@@ -159,15 +175,15 @@ class PreviewArea(ctk.CTkFrame):
 
         self.before = PreviewPane(
             self,
-            title="Antes",
-            placeholder="Arraste uma imagem aqui\nou clique em “Selecionar imagens”",
+            title=t("preview.before_title"),
+            placeholder=t("preview.before_placeholder", select=t("button.select")),
         )
         self.before.grid(row=0, column=0, sticky="nsew")
 
         self.after_pane = PreviewPane(
             self,
-            title="Depois",
-            placeholder="O resultado aparece aqui",
+            title=t("preview.after_title"),
+            placeholder=t("preview.after_placeholder"),
             transparent_background=True,
         )
         self.after_pane.grid(row=0, column=2, sticky="nsew")
@@ -200,6 +216,13 @@ class PreviewArea(ctk.CTkFrame):
     def clear_result(self) -> None:
         """Limpa apenas o painel de resultado."""
         self.after_pane.clear()
+
+    def apply_language(self) -> None:
+        """Retextualiza os dois painéis no idioma atual (ex.: troca de idioma)."""
+        self.before.set_labels(
+            t("preview.before_title"), t("preview.before_placeholder", select=t("button.select"))
+        )
+        self.after_pane.set_labels(t("preview.after_title"), t("preview.after_placeholder"))
 
     def clear(self) -> None:
         """Limpa os dois painéis."""

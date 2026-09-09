@@ -21,6 +21,16 @@ from services.image_processor import ImageProcessor
 #: Assinatura do callback de progresso: ``(atual, total, nome_do_arquivo)``.
 ProgressCallback = Callable[[int, int, str], None]
 
+#: Recorte bruto da IA, antes do pós-processamento: ``(recorte, tamanho
+#: original, imagem original)``. Guardar isso permite à interface reaplicar
+#: ajustes (suavização, fundo, redimensionamento) sem rodar o modelo de novo.
+RawCutout = tuple[Image.Image, tuple[int, int], Image.Image]
+
+#: Assinatura do callback de item concluído: ``(índice, total, resultado,
+#: imagem, recorte_bruto)``. ``índice`` é baseado em zero; ``imagem`` e
+#: ``recorte_bruto`` são ``None`` quando o item falhou.
+ItemCallback = Callable[[int, int, JobResult, "Image.Image | None", "RawCutout | None"], None]
+
 
 class RemovalPipeline:
     """Executa a remoção de fundo de uma ou várias imagens."""
@@ -61,6 +71,27 @@ class RemovalPipeline:
     # Execução
     # ------------------------------------------------------------------ #
 
+    def remove_background_only(self, path: Path) -> RawCutout:
+        """Executa somente a remoção de fundo — a etapa cara do processamento.
+
+        Separar essa etapa do pós-processamento permite reaplicar ajustes
+        (suavização, fundo, redimensionamento) instantaneamente, sem rodar o
+        modelo de IA de novo a cada mudança de opção.
+
+        Args:
+            path: Caminho da imagem de origem.
+
+        Returns:
+            Tupla ``(recorte bruto, tamanho original, imagem original)``.
+
+        Raises:
+            AppError: Em qualquer falha prevista (leitura ou IA).
+        """
+        source = ImageProcessor.load(path)
+        original_size = source.size
+        cutout = self.remover.remove(source)
+        return cutout, original_size, source
+
     def process_image(self, path: Path, options: ProcessingOptions) -> Image.Image:
         """Processa uma imagem e devolve o resultado em memória.
 
@@ -74,10 +105,8 @@ class RemovalPipeline:
         Raises:
             AppError: Em qualquer falha prevista (leitura, IA ou ajuste).
         """
-        source = ImageProcessor.load(path)
-        original_size = source.size
-        cutout = self.remover.remove(source)
-        return ImageProcessor.apply_options(cutout, options, original_size)
+        cutout, original_size, source = self.remove_background_only(path)
+        return ImageProcessor.apply_options(cutout, options, original_size, source)
 
     def process_batch(
         self,
@@ -85,6 +114,7 @@ class RemovalPipeline:
         destination_dir: Path,
         options: ProcessingOptions,
         on_progress: ProgressCallback | None = None,
+        on_item: ItemCallback | None = None,
     ) -> BatchReport:
         """Processa e salva várias imagens em sequência.
 
@@ -97,6 +127,11 @@ class RemovalPipeline:
             options: Opções de pós-processamento.
             on_progress: Callback chamado antes de cada imagem, recebendo
                 ``(índice, total, nome_do_arquivo)``.
+            on_item: Callback chamado logo após cada imagem ser processada
+                (com sucesso ou não), recebendo ``(índice, total, resultado,
+                imagem, recorte_bruto)``. Permite à interface exibir o
+                resultado assim que fica pronto, mesmo em lote, e reaplicar
+                ajustes depois sem rodar a IA de novo.
 
         Returns:
             Relatório com sucessos e falhas.
@@ -113,21 +148,32 @@ class RemovalPipeline:
             if on_progress is not None:
                 on_progress(index, total, source.name)
 
+            image: Image.Image | None = None
+            raw: RawCutout | None = None
             try:
-                processed = self.process_image(source, options)
-                output = self.exporter.export(processed, source, Path(destination_dir))
-                report.results.append(JobResult(source=source, output=output))
-            except AppError as exc:
-                report.results.append(
-                    JobResult(source=source, success=False, message=exc.message)
+                cutout, original_size, original = self.remove_background_only(source)
+                raw = (cutout, original_size, original)
+                image = ImageProcessor.apply_options(cutout, options, original_size, original)
+                output = self.exporter.export(
+                    image, source, Path(destination_dir),
+                    format=options.export_format, quality=options.export_quality,
                 )
+                result = JobResult(source=source, output=output)
+            except AppError as exc:
+                result = JobResult(source=source, success=False, message=exc.message)
             except Exception as exc:  # noqa: BLE001 - rede de segurança do lote
-                report.results.append(
-                    JobResult(
-                        source=source,
-                        success=False,
-                        message=f"Erro inesperado: {type(exc).__name__}",
-                    )
+                result = JobResult(
+                    source=source,
+                    success=False,
+                    message=f"Erro inesperado: {type(exc).__name__}",
+                )
+
+            report.results.append(result)
+            if on_item is not None:
+                on_item(
+                    index, total, result,
+                    image if result.success else None,
+                    raw if result.success else None,
                 )
 
         return report
