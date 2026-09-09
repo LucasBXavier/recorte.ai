@@ -6,6 +6,9 @@ artificial, **100% local**: nenhuma imagem sai do seu computador.
 Três passos: selecionar → ajustar o fundo (remover, trocar ou desfocar) → salvar em PNG ou WEBP.
 
 ---
+<img width="1917" height="1029" alt="image" src="https://github.com/user-attachments/assets/b882e701-1d57-425c-bc96-c681679cd2aa" />
+
+---
 
 ## Recursos
 
