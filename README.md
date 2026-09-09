@@ -3,7 +3,7 @@
 Aplicativo desktop para Windows que remove o fundo de imagens com inteligência
 artificial, **100% local** — nenhuma imagem sai do seu computador.
 
-Três passos: selecionar → remover fundo → salvar PNG transparente.
+Três passos: selecionar → ajustar o fundo (remover, trocar ou desfocar) → salvar em PNG ou WEBP.
 
 ---
 
@@ -79,7 +79,9 @@ removedor-fundo-ia/
 │   └── generate_assets.py      # recria os assets
 │
 ├── requirements.txt
-└── app.spec                    # build do executável
+├── app.spec                    # build com console (debug)
+├── app_gui.spec                # build sem console — o que vira o instalador
+└── installer.iss               # script do Inno Setup (instalador .exe)
 ```
 
 ### Como as camadas se separam
@@ -120,13 +122,15 @@ pyinstaller --onefile --windowed --icon assets/icon.ico ^
   --collect-all tkinterdnd2 --add-data "assets;assets" app.py
 ```
 
-Ou usando o spec já pronto (recomendado):
+Ou usando um dos specs já prontos (recomendado):
 
 ```bash
-pyinstaller app.spec
+pyinstaller app.spec        # com console — útil pra ver tracebacks ao debugar
+pyinstaller app_gui.spec    # sem console — o que os usuários finais devem rodar
 ```
 
-O executável fica em `dist/`.
+O executável fica em `dist/`. O `app_gui.spec` é o que o instalador (abaixo)
+espera encontrar em `dist/app_gui.exe`.
 
 > **Nota:** `--onefile` deixa a inicialização mais lenta porque descompacta tudo
 > a cada execução. Para uso diário, remova `--onefile` (ou use `onedir` no spec)
