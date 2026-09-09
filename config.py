@@ -145,6 +145,10 @@ WINDOW_MIN_SIZE: tuple[int, int] = (980, 700)
 DEVELOPER_NAME: str = "Lucas Boareto"
 DEVELOPER_URL: str = "https://lucasboareto.vercel.app"
 
+#: Repositório GitHub ("dono/nome") consultado para checar novas versões.
+#: Só funciona se o repositório (ou ao menos seus Releases) for público.
+UPDATE_REPO: str = "LucasBXavier/recorte.ai"
+
 # --------------------------------------------------------------------------- #
 # Layout responsivo
 # --------------------------------------------------------------------------- #

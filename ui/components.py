@@ -475,6 +475,8 @@ class StatusBar(ctk.CTkFrame):
         """
         super().__init__(master, fg_color="transparent", height=26)
 
+        self.update_link: LinkLabel | None = None
+
         self.link_label: LinkLabel | None = None
         if version:
             self.link_label = LinkLabel(
@@ -531,6 +533,27 @@ class StatusBar(ctk.CTkFrame):
         }
         self.dot.configure(text_color=colors.get(level, THEME.text_muted))
         self.message.configure(text=text)
+
+    def show_update(self, text: str, url: str) -> None:
+        """Mostra (ou atualiza) um aviso clicável de nova versão disponível.
+
+        Args:
+            text: Texto exibido (ex.: "Nova versão disponível: v1.1.0").
+            url: Endereço aberto ao clicar, geralmente a página do Release.
+        """
+        if self.update_link is not None:
+            self.update_link.configure(text=text)
+            self.update_link.set_url(url)
+            return
+
+        self.update_link = LinkLabel(
+            self,
+            text,
+            url,
+            font=font(THEME.size_small, "bold"),
+            text_color=THEME.warning,
+        )
+        self.update_link.pack(side="right", padx=(0, 12))
 
 
 class FileList(ctk.CTkScrollableFrame):

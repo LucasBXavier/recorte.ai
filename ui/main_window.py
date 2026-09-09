@@ -48,6 +48,7 @@ from services.clipboard import ClipboardError, copy_image
 from services.errors import AppError
 from services.image_processor import ImageProcessor
 from services.pipeline import RawCutout, RemovalPipeline
+from update_checker import UpdateInfo, check_for_update
 from ui.components import (
     Card,
     FileList,
@@ -115,12 +116,14 @@ class MainWindow(ctk.CTkFrame):
         self._help_window: ctk.CTkToplevel | None = None
         self._drag_start_x: int = 0
         self._drag_start_width: int = 0
+        self._update_info: UpdateInfo | None = None
 
         self._build_layout()
         self._enable_drag_and_drop()
         self._setup_shortcuts()
         self._poll_events()
         self._warm_up_model()
+        self._check_for_updates()
 
     # ------------------------------------------------------------------ #
     # Construção da interface
@@ -760,6 +763,7 @@ class MainWindow(ctk.CTkFrame):
         self._set_buttons_state()
 
         self.preview.apply_language()
+        self._show_update_notice()
 
         if self._settings_window is not None and self._settings_window.winfo_exists():
             self._settings_window.destroy()
@@ -1340,6 +1344,9 @@ class MainWindow(ctk.CTkFrame):
             self.status.show(t("status.model_ready", model=payload), "success")
         elif name == "model_failed":
             self.status.show(t("status.model_pending"), "warning")
+        elif name == "update_available":
+            self._update_info = payload
+            self._show_update_notice()
         elif name == "error":
             self._set_busy(False)
             self.progress.stop()
@@ -1460,6 +1467,42 @@ class MainWindow(ctk.CTkFrame):
                 self._events.put(("model_failed", None))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    # ------------------------------------------------------------------ #
+    # Verificação de novas versões
+    # ------------------------------------------------------------------ #
+
+    def _check_for_updates(self) -> None:
+        """Verifica em segundo plano se há uma versão mais nova publicada.
+
+        Feito uma única vez, ao abrir o aplicativo. Qualquer falha (sem
+        internet, repositório ainda sem releases etc.) já é tratada dentro
+        de :func:`update_checker.check_for_update`, que devolve ``None``
+        nesses casos, então essa checagem nunca aparece como erro para o
+        usuário.
+        """
+
+        def worker() -> None:
+            """Consulta o GitHub fora da thread da interface."""
+            info = check_for_update(APP_VERSION)
+            if info is not None:
+                self._events.put(("update_available", info))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _show_update_notice(self) -> None:
+        """Exibe o aviso de nova versão disponível na barra de status.
+
+        Não faz nada se nenhuma atualização foi encontrada ainda. Chamado de
+        novo em :meth:`_apply_language` para retextualizar o aviso, caso o
+        idioma mude enquanto ele está visível.
+        """
+        if self._update_info is None:
+            return
+        self.status.show_update(
+            t("status.update_available", version=self._update_info.version),
+            self._update_info.url,
+        )
 
     # ------------------------------------------------------------------ #
     # Estado da interface
